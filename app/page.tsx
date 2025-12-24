@@ -34,7 +34,6 @@ function ProductCard({ product }: { product: Product }) {
           أضف للسلة
         </button>
       </div>
-      <h1>Hello Omar Salama</h1>
     </div>
   )
 }
