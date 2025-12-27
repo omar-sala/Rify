@@ -29,7 +29,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   function increase(id: number) {
     setCart(
       cart.map((item) =>
-        item.id === id ? { ...item, quantity: item.quantity + 1 } : item
+        item.id === id ? { ...item, quantity: (item.quantity ?? 0) + 1 } : item
       )
     )
   }
@@ -38,9 +38,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setCart(
       cart
         .map((item) =>
-          item.id === id ? { ...item, quantity: item.quantity - 1 } : item
+          item.id === id
+            ? { ...item, quantity: (item.quantity ?? 1) - 1 }
+            : item
         )
-        .filter((item) => item.quantity > 0)
+        .filter((item) => (item.quantity ?? 0) > 0)
     )
   }
 
