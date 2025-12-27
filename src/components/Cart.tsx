@@ -15,7 +15,7 @@ export default function Cart() {
       {cart.map((item) => (
         <div key={item.id} className="flex justify-between items-center mb-2">
           <span>{item.name}</span>
-          <span>السعر({item.price * item.quantity})</span>
+          <span>السعر({item.price * (item.quantity ?? 0)})</span>
 
           <div className="flex items-center gap-2">
             <button
@@ -25,7 +25,7 @@ export default function Cart() {
               -
             </button>
 
-            <span>{item.quantity}</span>
+            <span>{item.quantity ?? 0}</span>
 
             <button
               onClick={() => increase(item.id)}
