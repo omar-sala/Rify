@@ -9,12 +9,24 @@ type CartContextType = {
   increase: (id: number) => void
   decrease: (id: number) => void
   remove: (id: number) => void
+  isOpen: boolean
+  openCart: () => void
+  closeCart: () => void
 }
 
 const CartContext = createContext<CartContextType | null>(null)
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<Product[]>([])
+  const [isOpen, setIsOpen] = useState(false)
+
+  function openCart() {
+    setIsOpen(true)
+  }
+
+  function closeCart() {
+    setIsOpen(false)
+  }
 
   function addToCart(product: Omit<Product, 'quantity'>) {
     const item = cart.find((p) => p.id === product.id)
@@ -24,6 +36,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } else {
       setCart([...cart, { ...product, quantity: 1 }])
     }
+
+    openCart() // 👈 زي Amazon
   }
 
   function increase(id: number) {
@@ -52,7 +66,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <CartContext.Provider
-      value={{ cart, addToCart, increase, decrease, remove }}
+      value={{
+        cart,
+        addToCart,
+        increase,
+        decrease,
+        remove,
+        isOpen,
+        openCart,
+        closeCart,
+      }}
     >
       {children}
     </CartContext.Provider>
