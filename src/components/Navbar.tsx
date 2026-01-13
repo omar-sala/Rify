@@ -35,7 +35,7 @@ export default function Navbar() {
           >
             🛒
           </button>
-          <Link href="/profile" className="cursor-pointer">
+          <Link href="/register" className="cursor-pointer">
             👤
           </Link>
         </div>
@@ -68,7 +68,7 @@ export default function Navbar() {
         >
           🛒 السلة
         </button>
-        <Link href="/profile" className="cursor-pointer">
+        <Link href="/register" className="cursor-pointer">
           👤 حسابي
         </Link>
       </div>

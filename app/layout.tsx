@@ -5,6 +5,7 @@ import { CartProvider } from '../app/context/CartContext'
 import Navbar from '@/src/components/Navbar'
 import CartDrawer from '@/src/components/CartDrawer'
 import { SearchProvider } from '../app/context/SearchContext'
+import { AuthProvider } from './context/AuthContext'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -43,13 +44,15 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 text-gray-900`}
       >
-        <CartProvider>
-          <SearchProvider>
-            <Navbar />
-            <CartDrawer />
-            {children}
-          </SearchProvider>
-        </CartProvider>
+        <AuthProvider>
+          <CartProvider>
+            <SearchProvider>
+              <Navbar />
+              <CartDrawer />
+              {children}
+            </SearchProvider>
+          </CartProvider>
+        </AuthProvider>
       </body>
     </html>
   )

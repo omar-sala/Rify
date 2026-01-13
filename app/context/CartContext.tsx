@@ -37,7 +37,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       setCart([...cart, { ...product, quantity: 1 }])
     }
 
-    openCart() // 👈 زي Amazon
+    openCart()
   }
 
   function increase(id: number) {
