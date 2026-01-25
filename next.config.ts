@@ -1,7 +1,15 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  /* config options here */
-};
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        // الـ Hostname ده بيغطي كل مشاريع سوبابيز
+        hostname: '**.supabase.co',
+      },
+    ],
+  },
+}
 
-export default nextConfig;
+export default nextConfig

@@ -5,7 +5,8 @@ import { Product } from '../../src/types/product'
 
 type CartContextType = {
   cart: Product[]
-  addToCart: (product: Omit<Product, 'quantity'>) => void
+  // التعديل هنا: خليناه يقبل المنتج ببياناته المتاحة + أي خصائص تانية
+  addToCart: (product: any) => void
   increase: (id: number) => void
   decrease: (id: number) => void
   remove: (id: number) => void
@@ -28,12 +29,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setIsOpen(false)
   }
 
-  function addToCart(product: Omit<Product, 'quantity'>) {
+  function addToCart(product: any) {
     const item = cart.find((p) => p.id === product.id)
 
     if (item) {
       increase(product.id)
     } else {
+      // نضمن إننا بنضيف الـ quantity حتى لو مش موجودة في الـ object الأصلي
       setCart([...cart, { ...product, quantity: 1 }])
     }
 
