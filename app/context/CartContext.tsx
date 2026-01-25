@@ -1,15 +1,14 @@
 'use client'
 
 import { createContext, useContext, useState } from 'react'
-import { Product } from '../../src/types/product'
 
+// جعلنا الـ Type يقبل أي خصائص للمنتج (any) لضمان توافقه مع Supabase
 type CartContextType = {
-  cart: Product[]
-  // التعديل هنا: خليناه يقبل المنتج ببياناته المتاحة + أي خصائص تانية
+  cart: any[]
   addToCart: (product: any) => void
-  increase: (id: number) => void
-  decrease: (id: number) => void
-  remove: (id: number) => void
+  increase: (id: string | number) => void
+  decrease: (id: string | number) => void
+  remove: (id: string | number) => void
   isOpen: boolean
   openCart: () => void
   closeCart: () => void
@@ -18,31 +17,23 @@ type CartContextType = {
 const CartContext = createContext<CartContextType | null>(null)
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [cart, setCart] = useState<Product[]>([])
+  const [cart, setCart] = useState<any[]>([])
   const [isOpen, setIsOpen] = useState(false)
 
-  function openCart() {
-    setIsOpen(true)
-  }
-
-  function closeCart() {
-    setIsOpen(false)
-  }
+  const openCart = () => setIsOpen(true)
+  const closeCart = () => setIsOpen(false)
 
   function addToCart(product: any) {
     const item = cart.find((p) => p.id === product.id)
-
     if (item) {
       increase(product.id)
     } else {
-      // نضمن إننا بنضيف الـ quantity حتى لو مش موجودة في الـ object الأصلي
       setCart([...cart, { ...product, quantity: 1 }])
     }
-
     openCart()
   }
 
-  function increase(id: number) {
+  function increase(id: string | number) {
     setCart(
       cart.map((item) =>
         item.id === id ? { ...item, quantity: (item.quantity ?? 0) + 1 } : item
@@ -50,7 +41,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     )
   }
 
-  function decrease(id: number) {
+  function decrease(id: string | number) {
     setCart(
       cart
         .map((item) =>
@@ -62,7 +53,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     )
   }
 
-  function remove(id: number) {
+  function remove(id: string | number) {
     setCart(cart.filter((item) => item.id !== id))
   }
 

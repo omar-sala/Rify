@@ -18,17 +18,10 @@ interface Product {
 function ProductCard({ product }: { product: Product }) {
   const { addToCart } = useCart()
 
-  // دالة ذكية لجلب الرابط
   const getFullImageUrl = (path: string) => {
     if (!path) return null
-    // لو الرابط مخزن كـ رابط كامل (يبدأ بـ http) استخدمه كما هو
     if (path.startsWith('http')) return path
-
-    // لو مخزن كـ اسم ملف، اسحبه من الـ Bucket اللي عملناه
-    const { data } = supabase.storage
-      .from('product-images') // تأكد أن هذا هو اسم الـ Bucket في سوبابيز
-      .getPublicUrl(path)
-
+    const { data } = supabase.storage.from('product-images').getPublicUrl(path)
     return data.publicUrl
   }
 
@@ -52,9 +45,9 @@ function ProductCard({ product }: { product: Product }) {
         )}
       </div>
 
-      <div className="p-4 flex flex-col flex-grow" dir="rtl">
-        <h2 className="font-bold text-lg mb-1 text-right">{product.name}</h2>
-        <p className="text-gray-500 text-sm mb-4 text-right line-clamp-2">
+      <div className="p-4 flex flex-col flex-grow text-right" dir="rtl">
+        <h2 className="font-bold text-lg mb-1">{product.name}</h2>
+        <p className="text-gray-500 text-sm mb-4 line-clamp-2">
           {product.description}
         </p>
 
@@ -67,7 +60,6 @@ function ProductCard({ product }: { product: Product }) {
               المخزون: {product.stock}
             </span>
           </div>
-
           <button
             onClick={() => addToCart(product as any)}
             className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition font-bold"
@@ -87,46 +79,32 @@ export default function HomePageContent({
 }) {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
-
   const search = (searchParams?.search ?? '').toLowerCase()
 
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true)
       const { data, error } = await supabase.from('products').select('*')
-
-      if (error) {
-        console.error('Error fetching products:', error)
-      } else {
-        setProducts(data as Product[])
-      }
+      if (error) console.error(error)
+      else setProducts(data as Product[])
       setLoading(false)
     }
-
     fetchProducts()
   }, [])
 
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(search)
+  const filteredProducts = products.filter((p) =>
+    p.name.toLowerCase().includes(search)
   )
 
   if (loading)
     return (
-      <div className="flex justify-center items-center min-h-[50vh]">
-        <p className="text-lg animate-pulse text-green-700 font-bold">
-          جارٍ تحميل المنتجات الخضراء... 🌿
-        </p>
+      <div className="text-center pt-20 animate-pulse text-green-700">
+        جارٍ التحميل... 🌿
       </div>
     )
 
   return (
     <div className="pt-32 sm:pt-24 p-6 max-w-7xl mx-auto">
-      {filteredProducts.length === 0 && (
-        <div className="text-center py-10">
-          <p className="text-gray-500 text-xl">لا توجد نتائج تطابق بحثك 🔍</p>
-        </div>
-      )}
-
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {filteredProducts.map((product) => (
           <ProductCard key={product.id} product={product} />
