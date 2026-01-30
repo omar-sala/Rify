@@ -79,14 +79,19 @@ export default function HomePageContent({
 }) {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
-  const search = (searchParams?.search ?? '').toLowerCase()
+
+  // فك الـ searchParams بطريقة آمنة
+  const search = (searchParams?.search || '').toLowerCase()
 
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true)
       const { data, error } = await supabase.from('products').select('*')
-      if (error) console.error(error)
-      else setProducts(data as Product[])
+      if (error) {
+        console.error(error)
+      } else {
+        setProducts(data as Product[])
+      }
       setLoading(false)
     }
     fetchProducts()
