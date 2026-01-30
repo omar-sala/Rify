@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { useCart } from './context/CartContext'
 import supabase from '../lib/supabase'
+import { useSearchParams } from 'next/navigation' // ضيفنا دي
 
 interface Product {
   id: string
@@ -72,16 +73,13 @@ function ProductCard({ product }: { product: Product }) {
   )
 }
 
-export default function HomePageContent({
-  searchParams,
-}: {
-  searchParams?: { [key: string]: string | undefined }
-}) {
+export default function HomePageContent() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
 
-  // فك الـ searchParams بطريقة آمنة
-  const search = (searchParams?.search || '').toLowerCase()
+  // الطريقة دي هي اللي Vercel بيحبها عشان ميطلعش Build Error
+  const searchParams = useSearchParams()
+  const search = (searchParams.get('search') || '').toLowerCase()
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -110,6 +108,11 @@ export default function HomePageContent({
 
   return (
     <div className="pt-32 sm:pt-24 p-6 max-w-7xl mx-auto">
+      {filteredProducts.length === 0 && !loading && (
+        <div className="text-center py-10">
+          <p className="text-gray-500 text-xl">لا توجد نتائج تطابق بحثك 🔍</p>
+        </div>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {filteredProducts.map((product) => (
           <ProductCard key={product.id} product={product} />
