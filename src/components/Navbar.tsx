@@ -1,13 +1,14 @@
 'use client'
 
-import { useCart } from '../../app/context/CartContext' // استدعاء السلة
-import { useAuth } from '../../app/context/AuthContext' // استدعاء تسجيل الدخول
+import { useCart } from '../../app/context/CartContext'
+import { useAuth } from '../../app/context/AuthContext'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function Navbar() {
-  const { openCart, cartItems } = useCart() // نفترض وجود عدد العناصر في السلة
+  // هنا التعديل: استخدمنا cart بدلاً من cartItems
+  const { openCart, cart } = useCart()
   const { user, logout, loading } = useAuth()
   const [search, setSearch] = useState('')
   const router = useRouter()
@@ -39,16 +40,16 @@ export default function Navbar() {
 
         {/* Mobile Icons (Cart & Profile) */}
         <div className="flex items-center gap-3 sm:hidden">
-          {/* السلة تظهر للمشتري فقط أو غير المسجل */}
           {(!user || user.role === 'user') && (
             <button
               onClick={openCart}
               className="relative px-2 py-1 hover:bg-green-800 rounded-lg transition"
             >
               🛒
-              {cartItems?.length > 0 && (
+              {/* التعديل هنا: استخدام cart.length */}
+              {cart?.length > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-[10px] rounded-full h-4 w-4 flex items-center justify-center">
-                  {cartItems.length}
+                  {cart.length}
                 </span>
               )}
             </button>
@@ -70,22 +71,21 @@ export default function Navbar() {
 
       {/* Desktop Section */}
       <div className="hidden sm:flex items-center gap-4">
-        {/* زر السلة */}
         {(!user || user.role === 'user') && (
           <button
             onClick={openCart}
             className="cursor-pointer relative px-3 py-2 rounded-lg hover:bg-green-800 transition-all duration-200"
           >
             🛒 السلة
-            {cartItems?.length > 0 && (
+            {/* التعديل هنا: استخدام cart.length */}
+            {cart?.length > 0 && (
               <span className="absolute top-0 right-0 bg-red-500 text-xs rounded-full h-5 w-5 flex items-center justify-center translate-x-1/2 -translate-y-1/2">
-                {cartItems.length}
+                {cart.length}
               </span>
             )}
           </button>
         )}
 
-        {/* زر الحساب أو تسجيل الدخول */}
         {loading ? (
           <div className="h-8 w-20 bg-green-600 animate-pulse rounded"></div>
         ) : user ? (
