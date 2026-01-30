@@ -1,9 +1,8 @@
 'use client'
 
-import { Suspense } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import HomePageContent from './HomePageContent'
 
-// لاحظ مفيش 'use client' هنا
 export default function Page({
   searchParams,
 }: {
@@ -11,6 +10,19 @@ export default function Page({
     | Promise<{ [key: string]: string | undefined }>
     | { [key: string]: string | undefined }
 }) {
+  const [params, setParams] = useState<{ [key: string]: string | undefined }>(
+    {}
+  )
+
+  useEffect(() => {
+    // حل الـ Promise لو موجود
+    if (searchParams instanceof Promise) {
+      searchParams.then((resolved) => setParams(resolved))
+    } else {
+      setParams(searchParams)
+    }
+  }, [searchParams])
+
   return (
     <main>
       <Suspense
@@ -20,7 +32,7 @@ export default function Page({
           </div>
         }
       >
-        <HomePageContent searchParams={searchParams} />
+        <HomePageContent searchParams={params} />
       </Suspense>
     </main>
   )
