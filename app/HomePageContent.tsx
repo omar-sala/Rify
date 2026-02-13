@@ -4,7 +4,8 @@ import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { useCart } from './context/CartContext'
 import supabase from '../lib/supabase'
-import { useSearchParams } from 'next/navigation' // ضيفنا دي
+import { useSearchParams } from 'next/navigation'
+import { useAuth } from './context/AuthContext'
 
 interface Product {
   id: string
@@ -75,31 +76,34 @@ function ProductCard({ product }: { product: Product }) {
 
 export default function HomePageContent() {
   const [products, setProducts] = useState<Product[]>([])
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const { user, loading: authLoading } = useAuth()
 
-  // الطريقة دي هي اللي Vercel بيحبها عشان ميطلعش Build Error
   const searchParams = useSearchParams()
   const search = (searchParams.get('search') || '').toLowerCase()
 
+  // جلب المنتجات من Supabase مرة واحدة عند mount
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true)
       const { data, error } = await supabase.from('products').select('*')
-      if (error) {
-        console.error(error)
-      } else {
-        setProducts(data as Product[])
-      }
+      if (error) console.error(error)
+      else setProducts(data as Product[])
       setLoading(false)
     }
+
     fetchProducts()
   }, [])
 
-  const filteredProducts = products.filter((p) =>
-    p.name.toLowerCase().includes(search)
-  )
+  // فلترة المنتجات عند كل تغيير في search أو products
+  useEffect(() => {
+    setFilteredProducts(
+      products.filter((p) => p.description.toLowerCase().includes(search))
+    )
+  }, [products, search])
 
-  if (loading)
+  if (loading || authLoading)
     return (
       <div className="text-center pt-20 animate-pulse text-green-700">
         جارٍ التحميل... 🌿
@@ -113,6 +117,7 @@ export default function HomePageContent() {
           <p className="text-gray-500 text-xl">لا توجد نتائج تطابق بحثك 🔍</p>
         </div>
       )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {filteredProducts.map((product) => (
           <ProductCard key={product.id} product={product} />

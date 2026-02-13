@@ -1,8 +1,8 @@
+// CartContext.tsx
 'use client'
 
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
 
-// جعلنا الـ Type يقبل أي خصائص للمنتج (any) لضمان توافقه مع Supabase
 type CartContextType = {
   cart: any[]
   addToCart: (product: any) => void
@@ -20,16 +20,24 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<any[]>([])
   const [isOpen, setIsOpen] = useState(false)
 
+  // ✅ load from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem('cart')
+    if (stored) setCart(JSON.parse(stored))
+  }, [])
+
+  // ✅ save to localStorage
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cart))
+  }, [cart])
+
   const openCart = () => setIsOpen(true)
   const closeCart = () => setIsOpen(false)
 
   function addToCart(product: any) {
     const item = cart.find((p) => p.id === product.id)
-    if (item) {
-      increase(product.id)
-    } else {
-      setCart([...cart, { ...product, quantity: 1 }])
-    }
+    if (item) increase(product.id)
+    else setCart([...cart, { ...product, quantity: 1 }])
     openCart()
   }
 

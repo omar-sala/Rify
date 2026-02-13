@@ -19,16 +19,26 @@ export default function RegisterPage() {
     if (password.length < 6)
       return alert('كلمة المرور يجب أن تكون 6 أحرف على الأقل')
 
+    // تحقق من صيغة البريد
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) return alert('البريد الإلكتروني غير صحيح')
+
     setLoading(true)
 
     try {
-      console.log('Starting registration for:', email) // مراقبة البداية
+      console.log('Starting registration for:', email)
       await register(name, email, password, role)
 
       console.log('Registration successful, redirecting...')
-      router.push('/auth/callback')
+
+      // Redirect حسب الدور
+      const roleRoutes: Record<Role, string> = {
+        user: '/dashboard/user',
+        seller: '/dashboard/seller',
+        delivery: '/dashboard/delivery',
+      }
+      router.push(roleRoutes[role])
     } catch (err: any) {
-      // طباعة الخطأ كامل في الكونسول عشان نعرف المشكلة من سوبابيز ولا من الكود
       console.error('Registration Error Details:', err)
       alert(err.message || 'حدث خطأ غير متوقع')
     } finally {
@@ -53,7 +63,7 @@ export default function RegisterPage() {
             </label>
             <input
               type="text"
-              placeholder="مثال: عمر محمد"
+              placeholder="ادخل الاسم"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="border border-gray-300 p-2.5 w-full rounded-lg focus:ring-2 focus:ring-green-500 outline-none transition-all"
@@ -104,20 +114,27 @@ export default function RegisterPage() {
           <button
             onClick={handleRegister}
             disabled={loading}
-            className={`w-full py-3 rounded-lg font-semibold transition-all mt-2 ${
+            className={`w-full py-3 rounded-lg cursor-pointer font-semibold transition-all mt-2 flex justify-center items-center gap-2 ${
               loading
                 ? 'bg-gray-400 cursor-not-allowed'
                 : 'bg-green-600 text-white hover:bg-green-700 active:scale-[0.98]'
             }`}
           >
-            {loading ? 'جارٍ إنشاء الحساب...' : 'إنشاء حساب'}
+            {loading ? (
+              <>
+                <span className="animate-spin border-2 border-white border-t-transparent rounded-full w-5 h-5"></span>
+                جاري إنشاء الحساب...
+              </>
+            ) : (
+              'إنشاء حساب'
+            )}
           </button>
         </div>
 
         <p className="mt-6 text-sm text-center text-gray-600">
           عندك حساب فعلاً؟{' '}
           <button
-            className="text-black font-bold hover:underline"
+            className="text-black cursor-pointer font-bold hover:underline"
             onClick={() => router.push('/login')}
           >
             سجل دخول
