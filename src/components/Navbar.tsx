@@ -10,15 +10,15 @@ export default function Navbar() {
   const { openCart, cart } = useCart()
   const { user, logout, loading } = useAuth()
   const router = useRouter()
-  const [search, setSearch] = useState('')
+  // const [search, setSearch] = useState('')
 
-  useEffect(() => {
+  const [search, setSearch] = useState(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
-      const current = params.get('search') || ''
-      setSearch(current)
+      return params.get('search') || ''
     }
-  }, [])
+    return '' // القيمة أثناء SSR
+  })
 
   useEffect(() => {
     const timeout = setTimeout(() => {
