@@ -20,7 +20,7 @@ export default function LoginPage() {
       await login(email, password)
 
       // التعديل هنا: بنوديه لصفحة الـ callback عشان تفحص الـ Role وتوجهه صح
-      router.push('/auth/callback')
+      router.replace('/auth/callback')
     } catch (err: any) {
       // تنبيه بشكل أشيك شوية
       alert(

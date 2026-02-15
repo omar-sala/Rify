@@ -4,7 +4,6 @@ import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { useCart } from './context/CartContext'
 import supabase from '../lib/supabase'
-import { useSearchParams } from 'next/navigation'
 import { useAuth } from './context/AuthContext'
 
 interface Product {
@@ -38,7 +37,7 @@ function ProductCard({ product }: { product: Product }) {
             alt={product.name}
             fill
             className="object-cover"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            sizes="100vw"
           />
         ) : (
           <div className="flex items-center justify-center h-full text-gray-400">
@@ -62,6 +61,7 @@ function ProductCard({ product }: { product: Product }) {
               المخزون: {product.stock}
             </span>
           </div>
+
           <button
             onClick={() => addToCart(product as any)}
             className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition font-bold"
@@ -79,11 +79,8 @@ export default function HomePageContent() {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const { user, loading: authLoading } = useAuth()
+  const search = '' // 🟢 نرجع البحث للـ state المحلي القديم لو حابب
 
-  const searchParams = useSearchParams()
-  const search = (searchParams.get('search') || '').toLowerCase()
-
-  // جلب المنتجات من Supabase مرة واحدة عند mount
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true)
@@ -96,10 +93,10 @@ export default function HomePageContent() {
     fetchProducts()
   }, [])
 
-  // فلترة المنتجات عند كل تغيير في search أو products
   useEffect(() => {
+    const lower = search.toLowerCase()
     setFilteredProducts(
-      products.filter((p) => p.description.toLowerCase().includes(search))
+      products.filter((p) => p.description.toLowerCase().includes(lower))
     )
   }, [products, search])
 
@@ -112,7 +109,7 @@ export default function HomePageContent() {
 
   return (
     <div className="pt-32 sm:pt-24 p-6 max-w-7xl mx-auto">
-      {filteredProducts.length === 0 && !loading && (
+      {filteredProducts.length === 0 && (
         <div className="text-center py-10">
           <p className="text-gray-500 text-xl">لا توجد نتائج تطابق بحثك 🔍</p>
         </div>

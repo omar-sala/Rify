@@ -1,23 +1,23 @@
-// Navbar.tsx
 'use client'
 
 import { useCart } from '../../app/context/CartContext'
 import { useAuth } from '../../app/context/AuthContext'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 
 export default function Navbar() {
   const { openCart, cart } = useCart()
   const { user, logout, loading } = useAuth()
   const router = useRouter()
-  const searchParams = useSearchParams()
-
   const [search, setSearch] = useState('')
 
   useEffect(() => {
-    const current = searchParams.get('search') || ''
-    setSearch(current)
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const current = params.get('search') || ''
+      setSearch(current)
+    }
   }, [])
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export default function Navbar() {
       router.replace(search.trim() ? `/?${params.toString()}` : '/')
     }, 400)
     return () => clearTimeout(timeout)
-  }, [search])
+  }, [search, router])
 
   const handleLogout = async () => {
     await logout()
@@ -40,7 +40,6 @@ export default function Navbar() {
         <Link href="/" className="text-xl font-bold cursor-pointer">
           RIFY 🌿
         </Link>
-
         <div className="flex items-center gap-3 sm:hidden">
           <button
             onClick={openCart}

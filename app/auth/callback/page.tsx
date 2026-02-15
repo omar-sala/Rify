@@ -18,7 +18,7 @@ function AuthCallbackContent() {
       } = await supabase.auth.getSession()
 
       if (sessionError || !session?.user) {
-        router.push('/register')
+        router.replace('/register')
         return
       }
 
@@ -33,13 +33,13 @@ function AuthCallbackContent() {
 
       if (profileError || !profileData) {
         console.error('Profile fetch error:', profileError?.message)
-        router.push('/register')
+        router.replace('/register')
         return
       }
 
       // 3. التوجيه بناءً على الـ Role
       const userRole = profileData.role || 'user'
-      router.push(`/dashboard/${userRole}`)
+      router.replace(`/dashboard/${userRole}`)
       setLoading(false)
     }
 
