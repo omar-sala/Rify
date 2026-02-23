@@ -4,14 +4,16 @@ import { useEffect, useState, Suspense } from 'react'
 import supabase from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
-// فصلنا المحتوى في Component لوحده عشان نغلفه بـ Suspense
+interface Profile {
+  role?: string
+}
+
 function AuthCallbackContent() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const checkUser = async () => {
-      // 1. التأكد من وجود جلسة نشطة
       const {
         data: { session },
         error: sessionError,
@@ -24,21 +26,21 @@ function AuthCallbackContent() {
 
       const user = session.user
 
-      // 2. جلب الدور من جدول profiles
-      const { data: profileData, error: profileError } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single()
 
-      if (profileError || !profileData) {
-        console.error('Profile fetch error:', profileError?.message)
+      const profileData = data as Profile | null
+
+      if (error || !profileData) {
+        console.error('Profile fetch error:', error?.message)
         router.replace('/register')
         return
       }
 
-      // 3. التوجيه بناءً على الـ Role
-      const userRole = profileData.role || 'user'
+      const userRole = profileData?.role || 'user'
       router.replace(`/dashboard/${userRole}`)
       setLoading(false)
     }
@@ -60,7 +62,6 @@ function AuthCallbackContent() {
   )
 }
 
-// المكون الأساسي اللي Next.js بيشوفه
 export default function AuthCallback() {
   return (
     <Suspense
