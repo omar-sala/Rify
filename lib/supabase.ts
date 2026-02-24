@@ -11,34 +11,25 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-const globalForSupabase = globalThis as unknown as {
-  supabase: ReturnType<typeof createClient> | undefined
+// منع إنشاء نسخ متعددة في الذاكرة أثناء الـ Development
+const createSupabaseClient = () => {
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  })
 }
 
-export const supabase =
-  globalForSupabase.supabase ?? createClient(supabaseUrl, supabaseAnonKey)
+const globalForSupabase = globalThis as unknown as {
+  supabase: ReturnType<typeof createSupabaseClient> | undefined
+}
+
+export const supabase = globalForSupabase.supabase ?? createSupabaseClient()
 
 if (process.env.NODE_ENV !== 'production') {
   globalForSupabase.supabase = supabase
 }
 
 export default supabase
-
-// import { createClient } from '@supabase/supabase-js'
-
-// const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-// const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-// // نعرف متغير على مستوى global علشان ميعملش instance جديد كل مرة
-// const globalForSupabase = globalThis as unknown as {
-//   supabase: ReturnType<typeof createClient> | undefined
-// }
-
-// export const supabase =
-//   globalForSupabase.supabase ?? createClient(supabaseUrl, supabaseAnonKey)
-
-// if (process.env.NODE_ENV !== 'production') {
-//   globalForSupabase.supabase = supabase
-// }
-
-// export default supabase

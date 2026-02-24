@@ -1,6 +1,12 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from 'react'
 import supabase from '@/lib/supabase'
 
 export type Role = 'user' | 'seller' | 'delivery'
@@ -31,44 +37,58 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<AppUser | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
+  // استخدام useCallback لمنع إعادة تعريف الدالة مع كل رندر
+  const fetchProfile = useCallback(async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
 
-    if (error) return null
-    return data as AppUser
-  }
+      if (error) return null
+      return data as AppUser
+    } catch {
+      return null
+    }
+  }, [])
 
   useEffect(() => {
     let isMounted = true
 
-    const init = async () => {
-      const { data } = await supabase.auth.getSession()
+    const initializeAuth = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
 
-      if (!isMounted) return
+        if (!isMounted) return
 
-      if (data.session?.user) {
-        const profile = await fetchProfile(data.session.user.id)
-        if (isMounted) setUser(profile)
+        if (session?.user) {
+          const profile = await fetchProfile(session.user.id)
+          if (isMounted) setUser(profile)
+        }
+      } catch (err) {
+        console.error('Auth init error:', err)
+      } finally {
+        if (isMounted) setLoading(false)
       }
-
-      if (isMounted) setLoading(false)
     }
 
-    init()
+    initializeAuth()
 
+    // استماع لتغييرات الجلسة بشكل أكثر استقراراً
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!isMounted) return
 
-      if (session?.user) {
-        const profile = await fetchProfile(session.user.id)
-        setUser(profile)
-      } else {
+      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+        if (session?.user) {
+          const profile = await fetchProfile(session.user.id)
+          setUser(profile)
+        }
+      } else if (event === 'SIGNED_OUT') {
         setUser(null)
       }
 
@@ -79,7 +99,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       isMounted = false
       subscription.unsubscribe()
     }
-  }, [])
+  }, [fetchProfile])
 
   const login = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
@@ -106,10 +126,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const { error: insertError } = await supabase
       .from('profiles')
-      .insert([{ id: data.user.id, name, email, role }])
+      .insert([{ id: data.user.id, name, email, role } as any])
 
     if (insertError) throw insertError
-
     await login(email, password)
   }
 
@@ -118,15 +137,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(null)
   }
 
-  const value: AuthContextType = {
-    user,
-    loading,
-    login,
-    register,
-    logout,
-  }
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+      {children}
+    </AuthContext.Provider>
+  )
 }
 
 export const useAuth = () => {
