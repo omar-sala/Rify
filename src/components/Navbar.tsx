@@ -2,32 +2,15 @@
 
 import { useCart } from '../../app/context/CartContext'
 import { useAuth } from '../../app/context/AuthContext'
+import { useSearch } from '../../app/context/SearchContext' // 🆕 الربط مع البحث
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function Navbar() {
   const { openCart, cart } = useCart()
   const { user, logout, loading } = useAuth()
+  const { search, setSearch } = useSearch() // 🆕 سحب الحالة من الـ Context
   const router = useRouter()
-  // const [search, setSearch] = useState('')
-
-  const [search, setSearch] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search)
-      return params.get('search') || ''
-    }
-    return '' // القيمة أثناء SSR
-  })
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      const params = new URLSearchParams()
-      if (search.trim()) params.set('search', search)
-      router.replace(search.trim() ? `/?${params.toString()}` : '/')
-    }, 400)
-    return () => clearTimeout(timeout)
-  }, [search, router])
 
   const handleLogout = async () => {
     await logout()
@@ -56,6 +39,7 @@ export default function Navbar() {
         </div>
       </div>
 
+      {/* 🔍 خانة البحث المربوطة بالـ Context */}
       <div className="w-full sm:w-1/2">
         <input
           type="text"
