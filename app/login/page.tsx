@@ -1,94 +1,79 @@
 'use client'
-
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '../context/AuthContext'
 
 export default function LoginPage() {
-  const { login } = useAuth()
+  const { login, user, loading } = useAuth()
   const router = useRouter()
-
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [btnLoading, setBtnLoading] = useState(false)
+
+  useEffect(() => {
+    if (loading) return
+    if (user) {
+      console.log('User profile:', user) // ✨ افحص الـ role هنا
+      const routes: Record<string, string> = {
+        user: '/',
+        seller: '/dashboard/seller',
+        delivery: '/dashboard/delivery',
+      }
+
+      const redirectTo = routes[user.role || 'user'] // fallback للمشتري
+      router.push(redirectTo)
+    }
+  }, [user, loading])
 
   const handleLogin = async () => {
-    if (!email || !password) return alert('يرجى إكمال البيانات')
-
     try {
-      setLoading(true)
+      setBtnLoading(true)
       await login(email, password)
-
-      // التعديل هنا: بنوديه لصفحة الـ callback عشان تفحص الـ Role وتوجهه صح
-      router.replace('/auth/callback')
     } catch (err: any) {
-      // تنبيه بشكل أشيك شوية
-      alert(
-        err.message === 'Invalid login credentials'
-          ? 'الإيميل أو كلمة المرور غلط'
-          : err.message || 'حدث خطأ في تسجيل الدخول'
-      )
+      alert('خطأ في الدخول: ' + err.message)
     } finally {
-      setLoading(false)
+      setBtnLoading(false)
     }
   }
 
+  if (user && !loading)
+    return <div className="p-20 text-center text-lg">جاري توجيهك...</div>
+
   return (
-    <div className="flex items-center justify-center min-h-[80vh] px-4">
-      <div className="max-w-md w-full bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-        <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
-          تسجيل الدخول
-        </h2>
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <div className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-sm flex flex-col gap-4">
+        <h1 className="text-2xl font-bold text-center">Login</h1>
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              البريد الإلكتروني
-            </label>
-            <input
-              type="email"
-              placeholder="Email"
-              className="border border-gray-300 p-2.5 w-full rounded-lg focus:ring-2 focus:ring-black outline-none transition-all"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
+        <input
+          className="border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-black"
+          placeholder="Email"
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              كلمة المرور
-            </label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              className="border border-gray-300 p-2.5 w-full rounded-lg focus:ring-2 focus:ring-black outline-none transition-all"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
+        <input
+          className="border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-black"
+          type="password"
+          placeholder="Password"
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
-          <button
-            onClick={handleLogin}
-            disabled={loading}
-            className={`w-full py-3 rounded-lg font-semibold transition-all ${
-              loading
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-black text-white hover:bg-gray-800 active:scale-[0.98]'
-            }`}
-          >
-            {loading ? 'جارٍ التحقق...' : 'دخول'}
-          </button>
-        </div>
+        <button
+          className="bg-black cursor-pointer text-white p-3 rounded-lg hover:opacity-90 transition"
+          onClick={handleLogin}
+          disabled={btnLoading}
+        >
+          {btnLoading ? 'Loading...' : 'Login'}
+        </button>
 
-        <div className="mt-6 text-sm text-center text-gray-600">
-          معندكش حساب؟{' '}
-          <button
-            className="text-green-600 font-bold hover:underline"
-            onClick={() => router.push('/register')}
-          >
-            سجل هنا
-          </button>
-        </div>
+        {/* زرار التسجيل */}
+        <p className="text-center text-sm text-gray-500">مش عندك حساب؟</p>
+
+        <button
+          className="border cursor-pointer border-black p-2 rounded-lg hover:bg-black hover:text-white transition"
+          onClick={() => router.push('/register')}
+        >
+          Create Account
+        </button>
       </div>
     </div>
   )

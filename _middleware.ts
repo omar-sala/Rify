@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
-export async function proxy(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
 
   const supabase = createServerClient(
@@ -23,14 +23,17 @@ export async function proxy(req: NextRequest) {
     }
   )
 
+  // جلب session الحالي
   const {
     data: { session },
   } = await supabase.auth.getSession()
 
+  // 🔹 تحديد المسارات المحمية فقط
   const isProtected =
-    req.nextUrl.pathname.startsWith('/dashboard') ||
-    req.nextUrl.pathname.startsWith('/buy')
+    req.nextUrl.pathname.startsWith('/dashboard/seller') ||
+    req.nextUrl.pathname.startsWith('/dashboard/delivery')
 
+  // 🔹 لو المحمي ومافيش session → redirect لل login
   if (isProtected && !session) {
     return NextResponse.redirect(new URL('/login', req.url))
   }
@@ -38,30 +41,7 @@ export async function proxy(req: NextRequest) {
   return res
 }
 
+// 🔹 مسارات Middleware المحمية
 export const config = {
-  matcher: ['/dashboard/:path*', '/buy/:path*'],
+  matcher: ['/dashboard/seller/:path*', '/dashboard/delivery/:path*'],
 }
-
-// import { NextResponse } from 'next/server'
-// import type { NextRequest } from 'next/server'
-// import { createClient } from '@supabase/supabase-js'
-
-// export async function middleware(req: NextRequest) {
-//   const url = req.nextUrl.clone()
-
-//   const isProtectedPage =
-//     url.pathname.startsWith('/dashboard') || url.pathname.startsWith('/buy')
-
-//   if (isProtectedPage) {
-//     const supabaseMiddleware = createClient(
-//       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-//       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-//     )
-//   }
-
-//   return NextResponse.next()
-// }
-
-// export const config = {
-//   matcher: ['/dashboard/:path*', '/buy/:path*'],
-// }

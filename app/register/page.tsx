@@ -37,7 +37,7 @@ export default function RegisterPage() {
         seller: '/dashboard/seller',
         delivery: '/dashboard/delivery',
       }
-      router.push(roleRoutes[role])
+      router.push(`/dashboard/${role}`)
     } catch (err: any) {
       console.error('Registration Error Details:', err)
       alert(err.message || 'حدث خطأ غير متوقع')
@@ -48,15 +48,22 @@ export default function RegisterPage() {
 
   return (
     <div
-      className="flex items-center justify-center min-h-[90vh] px-4 text-right"
+      className="flex items-center justify-center min-h-screen px-4 bg-gray-100"
       dir="rtl"
     >
-      <div className="max-w-md w-full bg-white p-8 rounded-xl shadow-lg border border-gray-100">
+      <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
         <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
           إنشاء حساب جديد
         </h2>
 
-        <div className="space-y-4">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            handleRegister()
+          }}
+          className="space-y-4"
+        >
+          {/* Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               الاسم الكامل
@@ -66,23 +73,25 @@ export default function RegisterPage() {
               placeholder="ادخل الاسم"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="border border-gray-300 p-2.5 w-full rounded-lg focus:ring-2 focus:ring-green-500 outline-none transition-all"
+              className="border border-gray-300 p-3 w-full rounded-lg focus:ring-2 focus:ring-green-500 outline-none transition-all cursor-text"
             />
           </div>
 
+          {/* Email */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               البريد الإلكتروني
             </label>
             <input
               type="email"
-              placeholder="Email"
+              placeholder="example@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="border border-gray-300 p-2.5 w-full rounded-lg focus:ring-2 focus:ring-green-500 outline-none transition-all text-left"
+              className="border border-gray-300 p-3 w-full rounded-lg focus:ring-2 focus:ring-green-500 outline-none transition-all text-left cursor-text"
             />
           </div>
 
+          {/* Password */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               كلمة المرور
@@ -92,18 +101,19 @@ export default function RegisterPage() {
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="border border-gray-300 p-2.5 w-full rounded-lg focus:ring-2 focus:ring-green-500 outline-none transition-all text-left"
+              className="border border-gray-300 p-3 w-full rounded-lg focus:ring-2 focus:ring-green-500 outline-none transition-all text-left cursor-text"
             />
           </div>
 
-          <div className="relative">
+          {/* Role */}
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               سجلت كـ :
             </label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as Role)}
-              className="border border-gray-300 p-2.5 w-full rounded-lg bg-gray-50 focus:ring-2 focus:ring-green-500 outline-none appearance-none cursor-pointer"
+              className="border border-gray-300 p-3 w-full rounded-lg bg-gray-50 focus:ring-2 focus:ring-green-500 outline-none cursor-pointer"
             >
               <option value="user">مشتري (User)</option>
               <option value="seller">تاجر (Seller)</option>
@@ -111,13 +121,14 @@ export default function RegisterPage() {
             </select>
           </div>
 
+          {/* Submit */}
           <button
-            onClick={handleRegister}
-            disabled={loading}
-            className={`w-full py-3 rounded-lg cursor-pointer font-semibold transition-all mt-2 flex justify-center items-center gap-2 ${
-              loading
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-green-600 text-white hover:bg-green-700 active:scale-[0.98]'
+            type="submit"
+            disabled={!name || !email || !password || loading}
+            className={`w-full py-3 rounded-lg font-semibold transition-all mt-2 flex justify-center items-center gap-2 ${
+              !name || !email || !password || loading
+                ? 'bg-gray-400 cursor-not-allowed opacity-70'
+                : 'bg-green-600 text-white hover:bg-green-700 active:scale-[0.97] cursor-pointer'
             }`}
           >
             {loading ? (
@@ -129,12 +140,13 @@ export default function RegisterPage() {
               'إنشاء حساب'
             )}
           </button>
-        </div>
+        </form>
 
+        {/* Login redirect */}
         <p className="mt-6 text-sm text-center text-gray-600">
           عندك حساب فعلاً؟{' '}
           <button
-            className="text-black cursor-pointer font-bold hover:underline"
+            className="text-green-600 cursor-pointer font-bold hover:underline hover:text-green-700 transition"
             onClick={() => router.push('/login')}
           >
             سجل دخول

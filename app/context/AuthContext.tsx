@@ -37,101 +37,99 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<AppUser | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // استخدام useCallback لمنع إعادة تعريف الدالة مع كل رندر
   const fetchProfile = useCallback(async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single()
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single()
 
-      if (error) return null
-      return data as AppUser
-    } catch {
-      return null
-    }
+    if (error) return null
+    return data as AppUser
   }, [])
 
   useEffect(() => {
-    let isMounted = true
+    const init = async () => {
+      setLoading(true)
 
-    const initializeAuth = async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
 
-        if (!isMounted) return
-
-        if (session?.user) {
-          const profile = await fetchProfile(session.user.id)
-          if (isMounted) setUser(profile)
-        }
-      } catch (err) {
-        console.error('Auth init error:', err)
-      } finally {
-        if (isMounted) setLoading(false)
-      }
-    }
-
-    initializeAuth()
-
-    // استماع لتغييرات الجلسة بشكل أكثر استقراراً
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!isMounted) return
-
-      if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-        if (session?.user) {
-          const profile = await fetchProfile(session.user.id)
-          setUser(profile)
-        }
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null)
+      if (session?.user) {
+        const profile = await fetchProfile(session.user.id)
+        setUser(profile)
       }
 
       setLoading(false)
-    })
-
-    return () => {
-      isMounted = false
-      subscription.unsubscribe()
     }
+
+    init()
   }, [fetchProfile])
 
+  // ✅ LOGIN
   const login = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-    if (error) throw error
+    setLoading(true)
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (error) throw error
+
+      if (data.user) {
+        const profile = await fetchProfile(data.user.id)
+        setUser(profile)
+      }
+    } catch (error) {
+      throw error
+    } finally {
+      setLoading(false)
+    }
   }
 
+  // ✅ REGISTER (🔥 الجديد)
   const register = async (
     name: string,
     email: string,
     password: string,
     role: Role
   ) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { name, role } },
-    })
+    setLoading(true)
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      })
 
-    if (error) throw error
-    if (!data.user) throw new Error('فشل إنشاء المستخدم')
+      if (error) throw error
 
-    const { error: insertError } = await supabase
-      .from('profiles')
-      .insert([{ id: data.user.id, name, email, role } as any])
+      const userId = data.user?.id
 
-    if (insertError) throw insertError
-    await login(email, password)
+      if (userId) {
+        // 🔥 تخزين البيانات في profiles
+        const { error: dbError } = await supabase.from('profiles').insert({
+          id: userId,
+          name,
+          email,
+          role,
+        })
+
+        if (dbError) throw dbError
+
+        // 🔥 تحديث اليوزر مباشرة بعد التسجيل
+        const profile = await fetchProfile(userId)
+        setUser(profile)
+      }
+    } catch (error) {
+      throw error
+    } finally {
+      setLoading(false)
+    }
   }
 
+  // ✅ LOGOUT
   const logout = async () => {
     await supabase.auth.signOut()
     setUser(null)
