@@ -56,7 +56,6 @@ export default function CartDrawer() {
             seller_lat: item.lat,
             seller_lng: item.lng,
 
-            // التعديل هنا: شيلنا النص اللي كان بيعمل Error
             // لو العمود "location" في الداتابيز Geometry سيبه فاضي أو ابعت NULL
             location: null,
           }))

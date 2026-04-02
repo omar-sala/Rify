@@ -12,6 +12,7 @@ type CartContextType = {
   isOpen: boolean
   openCart: () => void
   closeCart: () => void
+  clearCart: () => void
 }
 
 const CartContext = createContext<CartContextType | null>(null)
