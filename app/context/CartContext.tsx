@@ -61,6 +61,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     )
   }
 
+  function clearCart() {
+    setCart([])
+  }
+
   function remove(id: string | number) {
     setCart(cart.filter((item) => item.id !== id))
   }
@@ -76,6 +80,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         isOpen,
         openCart,
         closeCart,
+        clearCart,
       }}
     >
       {children}

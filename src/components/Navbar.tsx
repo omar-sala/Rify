@@ -68,7 +68,10 @@ export default function Navbar() {
         ) : user ? (
           <div className="flex items-center gap-2">
             <Link
-              href={`/dashboard/${user.role}`}
+              // هنا التعديل: لو الـ role هو user يروح لـ /orders، غير كده يروح للـ dashboard بتاع دوره
+              href={
+                user.role === 'user' ? '/orders' : `/dashboard/${user.role}`
+              }
               className="px-3 py-2 rounded-lg hover:bg-green-800 transition"
             >
               {user.name.split(' ')[0]} 👤

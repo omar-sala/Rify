@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { useAuth } from '../../context/AuthContext'
 import supabase from '@/lib/supabase'
 
@@ -13,6 +12,9 @@ interface Product {
   stock: number
   image_url: string
   seller_id: string
+  seller_phone: string
+  lat: number
+  lng: number
   created_at: string
 }
 
@@ -22,13 +24,39 @@ export default function SellerDashboard() {
   const [loading, setLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // فورم لإضافة منتج
+  // الحقول الأساسية
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const [price, setPrice] = useState<number | string>('') // تعديل هنا لقبول نص فارغ
-  const [stock, setStock] = useState<number | string>('') // تعديل هنا لقبol نص فارغ
+  const [price, setPrice] = useState<number | string>('')
+  const [stock, setStock] = useState<number | string>('')
+
+  // الحقول الجديدة (إجباري)
+  const [sellerPhone, setSellerPhone] = useState('')
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(
+    null
+  )
+
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState('')
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+
+  // 1. جلب موقع التاجر عند فتح الصفحة
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          })
+        },
+        () =>
+          alert(
+            'برجاء تفعيل الموقع (GPS) لتتمكن من إضافة المنتجات بدقة للمندوبين'
+          )
+      )
+    }
+  }, [])
 
   const fetchProducts = async () => {
     if (!user) return
@@ -44,22 +72,24 @@ export default function SellerDashboard() {
     fetchProducts()
   }, [user])
 
-  // معالجة اختيار الصورة
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0]
       setImageFile(file)
-      setPreviewUrl(URL.createObjectURL(file)) // عرض صورة مؤقتة للمعاينة
+      setPreviewUrl(URL.createObjectURL(file))
     }
   }
 
   const handleAddProduct = async () => {
-    if (!name || !price || !imageFile)
-      return alert('برجاء إكمال البيانات واختيار صورة')
+    // التحقق من البيانات الجديدة
+    if (!name || !price || !imageFile || !sellerPhone)
+      return alert('برجاء إكمال البيانات (الاسم، السعر، الصورة، ورقم التليفون)')
+
+    if (!location)
+      return alert('جاري تحديد موقعك.. برجاء الانتظار ثانية أو تفعيل الـ GPS')
 
     setLoading(true)
     try {
-      // 1. رفع الصورة إلى Supabase Storage
       const fileExt = imageFile.name.split('.').pop()
       const fileName = `${Math.random()}.${fileExt}`
       const filePath = `${user?.id}/${fileName}`
@@ -70,12 +100,11 @@ export default function SellerDashboard() {
 
       if (uploadError) throw uploadError
 
-      // 2. الحصول على رابط الصورة العام
       const {
         data: { publicUrl },
       } = supabase.storage.from('product-images').getPublicUrl(filePath)
 
-      // 3. إضافة المنتج لقاعدة البيانات
+      // إضافة المنتج مع التليفون واللوكيشن
       const { error: insertError } = await supabase.from('products').insert({
         name,
         description,
@@ -83,16 +112,19 @@ export default function SellerDashboard() {
         stock: Number(stock),
         image_url: publicUrl,
         seller_id: user?.id,
+        seller_phone: sellerPhone, // حفظ الرقم في المنتج
+        lat: location.lat, // حفظ خط العرض
+        lng: location.lng, // حفظ خط الطول
       })
 
       if (insertError) throw insertError
 
       alert('تم إضافة المنتج بنجاح! 🌿')
-      // تصفير الفورم
       setName('')
       setDescription('')
       setPrice('')
       setStock('')
+      setSellerPhone('')
       setImageFile(null)
       setPreviewUrl('')
       fetchProducts()
@@ -101,6 +133,16 @@ export default function SellerDashboard() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleUpdate = async (id: number, updatedData: any) => {
+    const { error } = await supabase
+      .from('products')
+      .update(updatedData)
+      .eq('id', id)
+
+    if (error) console.log(error)
+    else alert('تم التعديل ✅')
   }
 
   const handleDelete = async (id: number) => {
@@ -123,13 +165,29 @@ export default function SellerDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-4">
             <div>
-              <label className="block mb-1 text-sm font-medium">الاسم</label>
+              <label className="block mb-1 text-sm font-medium">
+                اسم المنتج
+              </label>
               <input
                 type="text"
-                placeholder="مثلاً: طماطم أورجانيك"
+                placeholder="طماطم أورجانيك"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="border p-2.5 rounded-xl w-full focus:ring-2 focus:ring-green-500 outline-none"
+              />
+            </div>
+
+            {/* حقل رقم التليفون الجديد */}
+            <div>
+              <label className="block mb-1 text-sm font-medium text-orange-600 font-bold">
+                رقم التواصل (واتساب/اتصال) *
+              </label>
+              <input
+                type="text"
+                placeholder="010XXXXXXXX"
+                value={sellerPhone}
+                onChange={(e) => setSellerPhone(e.target.value)}
+                className="border-2 border-orange-100 p-2.5 rounded-xl w-full focus:ring-2 focus:ring-orange-500 outline-none font-mono"
               />
             </div>
 
@@ -152,8 +210,7 @@ export default function SellerDashboard() {
                 </label>
                 <input
                   type="number"
-                  placeholder="0"
-                  value={price === 0 ? '' : price} // حل مشكلة الـ 0
+                  value={price}
                   onChange={(e) => setPrice(e.target.value)}
                   className="border p-2.5 rounded-xl w-full focus:ring-2 focus:ring-green-500 outline-none"
                 />
@@ -162,15 +219,13 @@ export default function SellerDashboard() {
                 <label className="block mb-1 text-sm font-medium">الكمية</label>
                 <input
                   type="number"
-                  placeholder="0"
-                  value={stock === 0 ? '' : stock} // حل مشكلة الـ 0
+                  value={stock}
                   onChange={(e) => setStock(e.target.value)}
                   className="border p-2.5 rounded-xl w-full focus:ring-2 focus:ring-green-500 outline-none"
                 />
               </div>
             </div>
 
-            {/* جزء رفع الصورة */}
             <div>
               <label className="block mb-1 text-sm font-medium">
                 صورة المنتج
@@ -188,7 +243,7 @@ export default function SellerDashboard() {
                 ) : (
                   <div className="py-4 text-gray-400">
                     <span className="block text-2xl">📸</span>
-                    اضغط لرفع صورة أو التصوير
+                    اضغط لرفع صورة
                   </div>
                 )}
                 <input
@@ -199,6 +254,15 @@ export default function SellerDashboard() {
                   onChange={handleFileChange}
                 />
               </div>
+            </div>
+
+            {/* عرض حالة الموقع */}
+            <div
+              className={`text-xs p-2 rounded-lg ${location ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}
+            >
+              {location
+                ? '📍 تم تحديد موقعك التلقائي بنجاح'
+                : '📍 جاري تحديد موقعك...'}
             </div>
           </div>
         </div>
@@ -212,38 +276,102 @@ export default function SellerDashboard() {
               : 'bg-green-600 hover:bg-green-700 active:scale-95'
           }`}
         >
-          {loading ? 'جاري رفع البيانات...' : 'اضافة المنتج'}
+          {loading ? 'جاري رفع البيانات...' : 'اضافة المنتج للريف'}
         </button>
       </div>
 
-      <h2 className="text-xl font-bold mb-4 text-gray-700">منتجاتك الحالية</h2>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      {/* عرض المنتجات الحالية */}
+      <h2 className="text-2xl font-bold mb-6 text-gray-800">منتجاتك الحالية</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {products.map((p) => (
           <div
             key={p.id}
-            className="border rounded-2xl overflow-hidden bg-white shadow-sm relative group"
+            className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 group relative border"
           >
-            <img
-              src={p.image_url}
-              alt={p.name}
-              className="h-40 w-full object-cover"
-            />
-            <div className="p-3">
-              <h3 className="font-bold text-gray-800">{p.name}</h3>
-              <div className="flex justify-between items-center mt-2 text-sm">
-                <span className="text-green-700 font-bold">{p.price} ج.م</span>
-                <span className="text-gray-500">مخزون: {p.stock}</span>
+            <div className="overflow-hidden relative">
+              <img
+                src={p.image_url}
+                alt={p.name}
+                className="h-48 w-full object-cover"
+              />
+            </div>
+            <div className="p-4 space-y-2">
+              <h3 className="font-semibold text-lg text-gray-800 line-clamp-1">
+                {p.name}
+              </h3>
+              <p className="text-orange-600 text-xs font-bold font-mono">
+                {p.seller_phone}
+              </p>
+              <div className="flex justify-between items-center pt-2">
+                <span className="text-green-600 font-bold text-lg">
+                  {p.price} ج.م
+                </span>
               </div>
             </div>
+            {/* أزرار التعديل والحذف */}
+            <button
+              onClick={() => setEditingProduct(p)}
+              className="absolute top-3 right-3 bg-white p-2 rounded-full text-blue-500 shadow-md"
+            >
+              ✏️
+            </button>
             <button
               onClick={() => handleDelete(p.id)}
-              className="absolute top-2 left-2 bg-white/90 p-1.5 rounded-full text-red-600 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+              className="absolute top-3 left-3 bg-white p-2 rounded-full text-red-500 shadow-md"
             >
               🗑️
             </button>
           </div>
         ))}
       </div>
+
+      {/* مودال التعديل (نفس المنطق مع إضافة الحقول الجديدة لو حبيت) */}
+      {editingProduct && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-[350px] space-y-4 shadow-xl">
+            <h2 className="text-xl font-bold">تعديل المنتج</h2>
+            <input
+              type="text"
+              value={editingProduct.name}
+              onChange={(e) =>
+                setEditingProduct({ ...editingProduct, name: e.target.value })
+              }
+              className="w-full border p-2 rounded-lg"
+              placeholder="الاسم"
+            />
+            <input
+              type="text"
+              value={editingProduct.seller_phone}
+              onChange={(e) =>
+                setEditingProduct({
+                  ...editingProduct,
+                  seller_phone: e.target.value,
+                })
+              }
+              className="w-full border p-2 rounded-lg"
+              placeholder="رقم التليفون"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => setEditingProduct(null)}
+                className="w-full py-2 rounded-lg bg-gray-200"
+              >
+                إلغاء
+              </button>
+              <button
+                onClick={async () => {
+                  await handleUpdate(editingProduct.id, editingProduct)
+                  setEditingProduct(null)
+                  fetchProducts()
+                }}
+                className="w-full py-2 rounded-lg bg-green-600 text-white"
+              >
+                حفظ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
