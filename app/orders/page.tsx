@@ -87,7 +87,9 @@ export default function OrdersPage() {
         },
         (payload) => {
           setOrders((prev) => {
-            const updated = payload.new
+            // 🔥 الحل المهم: نعرف النوع بشكل آمن
+            const updated = payload.new as any
+            const old = payload.old as any
 
             if (payload.eventType === 'INSERT') {
               return [updated, ...prev]
@@ -95,12 +97,12 @@ export default function OrdersPage() {
 
             if (payload.eventType === 'UPDATE') {
               return prev.map((order) =>
-                order.id === updated.id ? { ...order, ...updated } : order
+                order?.id === updated?.id ? { ...order, ...updated } : order
               )
             }
 
             if (payload.eventType === 'DELETE') {
-              return prev.filter((o) => o.id !== payload.old.id)
+              return prev.filter((o) => o?.id !== old?.id)
             }
 
             return prev
