@@ -2,14 +2,17 @@
 
 import { useCart } from '../../app/context/CartContext'
 import { useAuth } from '../../app/context/AuthContext'
-import { useSearch } from '../../app/context/SearchContext' // 🆕 الربط مع البحث
+import { useSearch } from '../../app/context/SearchContext'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+
+// icons فقط
+import { FaShoppingCart, FaUser, FaSignOutAlt, FaSearch } from 'react-icons/fa'
 
 export default function Navbar() {
   const { openCart, cart } = useCart()
   const { user, logout, loading } = useAuth()
-  const { search, setSearch } = useSearch() // 🆕 سحب الحالة من الـ Context
+  const { search, setSearch } = useSearch()
   const router = useRouter()
 
   const handleLogout = async () => {
@@ -23,30 +26,36 @@ export default function Navbar() {
         <Link href="/" className="text-xl font-bold cursor-pointer">
           RIFY 🌿
         </Link>
+
         <div className="flex items-center gap-3 sm:hidden">
           <button
             onClick={openCart}
             className="relative px-2 py-1 hover:bg-green-800 rounded-lg transition"
           >
-            🛒
+            <FaShoppingCart />
             {cart?.length > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-[10px] rounded-full h-4 w-4 flex items-center justify-center">
                 {cart.length}
               </span>
             )}
           </button>
-          <Link href={user ? `/dashboard/${user.role}` : '/login'}>👤</Link>
+
+          <Link href={user ? `/dashboard/${user.role}` : '/login'}>
+            <FaUser />
+          </Link>
         </div>
       </div>
 
-      {/* 🔍 خانة البحث المربوطة بالـ Context */}
-      <div className="w-full sm:w-1/2">
+      {/* search */}
+      <div className="w-full sm:w-1/2 relative">
+        <FaSearch className="absolute top-3 right-3 text-gray-500" />
+
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="ابحث عن منتج..."
-          className="w-full px-3 py-2 rounded-lg border-2 border-gray-300 text-black focus:border-green-600 outline-none transition"
+          className="w-full px-10 py-2 rounded-lg border-2 border-gray-300 text-black focus:border-green-600 outline-none transition"
         />
       </div>
 
@@ -55,7 +64,7 @@ export default function Navbar() {
           onClick={openCart}
           className="cursor-pointer relative px-3 py-2 rounded-lg hover:bg-green-800 transition-all duration-200"
         >
-          🛒 السلة
+          <FaShoppingCart /> السلة
           {cart?.length > 0 && (
             <span className="absolute top-0 right-0 bg-red-500 text-xs rounded-full h-5 w-5 flex items-center justify-center translate-x-1/2 -translate-y-1/2">
               {cart.length}
@@ -68,18 +77,20 @@ export default function Navbar() {
         ) : user ? (
           <div className="flex items-center gap-2">
             <Link
-              // هنا التعديل: لو الـ role هو user يروح لـ /orders، غير كده يروح للـ dashboard بتاع دوره
               href={
                 user.role === 'user' ? '/orders' : `/dashboard/${user.role}`
               }
-              className="px-3 py-2 rounded-lg hover:bg-green-800 transition"
+              className="px-3 py-2 rounded-lg hover:bg-green-800 transition flex items-center gap-2"
             >
-              {user.name.split(' ')[0]} 👤
+              <FaUser />
+              {user.name.split(' ')[0]}
             </Link>
+
             <button
               onClick={handleLogout}
-              className="px-2 py-1 bg-red-600 rounded hover:bg-red-700 text-xs"
+              className="px-2 py-1 bg-red-600 rounded hover:bg-red-700 text-xs flex items-center gap-1"
             >
+              <FaSignOutAlt />
               خروج
             </button>
           </div>

@@ -5,17 +5,21 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '../../context/AuthContext'
 import supabase from '@/lib/supabase'
 
+import { FaPhoneAlt, FaMapMarkerAlt, FaMotorcycle } from 'react-icons/fa'
+
 export default function DeliveryDashboard() {
   const { user, loading } = useAuth()
   const router = useRouter()
+
   const [orders, setOrders] = useState<any[]>([])
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+
   const [myLocation, setMyLocation] = useState<{
     lat: number
     lng: number
   } | null>(null)
 
-  // 1. دالة حساب المسافة (Haversine)
+  // حساب المسافة
   const calculateDistance = (
     lat1: number,
     lon1: number,
@@ -23,51 +27,67 @@ export default function DeliveryDashboard() {
     lon2: number
   ) => {
     if (!lat1 || !lon1 || !lat2 || !lon2) return '..'
+
     const R = 6371
     const dLat = ((lat2 - lat1) * Math.PI) / 180
     const dLon = ((lon2 - lon1) * Math.PI) / 180
+
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos((lat1 * Math.PI) / 180) *
         Math.cos((lat2 * Math.PI) / 180) *
         Math.sin(dLon / 2) *
         Math.sin(dLon / 2)
+
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+
     return (R * c).toFixed(1)
   }
 
-  // 2. تحديث موقع المندوب وتتبع حركته
+  // تتبع موقع المندوب
   useEffect(() => {
     if (!user || user.role !== 'delivery') return
 
     const watchId = navigator.geolocation.watchPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords
-        setMyLocation({ lat: latitude, lng: longitude })
 
-        // تحديث موقع المندوب في الأوردرات اللي "قيد التنفيذ" معاه حالياً
+        setMyLocation({
+          lat: latitude,
+          lng: longitude,
+        })
+
         await supabase
           .from('orders')
-          .update({ driver_lat: latitude, driver_lng: longitude })
+          .update({
+            driver_lat: latitude,
+            driver_lng: longitude,
+          })
           .eq('driver_id', user.id)
           .eq('status', 'in_progress')
       },
-      (err) => console.error('GPS Error:', err),
-      { enableHighAccuracy: true }
+      (err) => console.error(err),
+      {
+        enableHighAccuracy: true,
+      }
     )
 
     return () => navigator.geolocation.clearWatch(watchId)
   }, [user?.id])
 
+  // جلب الطلبات
   const fetchOrders = async () => {
     if (!user) return
+
     const { data, error } = await supabase
       .from('orders')
       .select(
         `
         *,
         product:products!fk_product (
-          name, price, image_url
+          name,
+          price,
+          image_url
         )
       `
       )
@@ -79,24 +99,36 @@ export default function DeliveryDashboard() {
 
   useEffect(() => {
     if (loading) return
-    if (!user || user.role !== 'delivery') router.replace('/')
+
+    if (!user || user.role !== 'delivery') {
+      router.replace('/')
+      return
+    }
+
     fetchOrders()
 
     const channel = supabase
       .channel('delivery_updates')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'orders' },
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+        },
         () => fetchOrders()
       )
       .subscribe()
+
     return () => {
       supabase.removeChannel(channel)
     }
   }, [user?.id, loading])
 
+  // قبول الطلب
   const handleAccept = async (orderId: string) => {
     setActionLoading(orderId)
+
     const { error } = await supabase
       .from('orders')
       .update({
@@ -107,25 +139,36 @@ export default function DeliveryDashboard() {
       .eq('id', orderId)
       .is('driver_id', null)
 
-    if (error) alert('عذراً، الطلب لم يعد متاحاً')
-    else fetchOrders()
+    if (error) {
+      alert('عذراً، الطلب لم يعد متاحاً')
+    } else {
+      fetchOrders()
+    }
+
     setActionLoading(null)
   }
 
-  if (loading || !user)
+  if (loading || !user) {
     return <div className="p-10 text-center font-bold">جاري التحميل... 🚚</div>
+  }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto text-right" dir="rtl">
+    <div className="p-6 pt-28 max-w-6xl mx-auto text-right" dir="rtl">
+      {/* HEADER */}
       <header className="mb-8 flex justify-between items-center bg-white p-6 rounded-3xl shadow-sm border-r-8 border-green-600">
         <div>
-          <h1 className="text-3xl font-black text-gray-900">لوحة المندوب 🚀</h1>
-          <p className="text-gray-500 font-bold">
+          <h1 className="text-3xl font-black text-gray-900 flex items-center gap-3">
+            <FaMotorcycle className="text-green-600" />
+            لوحة المندوب
+          </h1>
+
+          <p className="text-gray-500 font-bold mt-2">
             مرحباً كابتن {user.name}، إليك الطلبات القريبة منك
           </p>
         </div>
       </header>
 
+      {/* ORDERS */}
       <div className="grid gap-6">
         {orders.map((order) => {
           const distToSeller = calculateDistance(
@@ -134,6 +177,7 @@ export default function DeliveryDashboard() {
             order.seller_lat,
             order.seller_lng
           )
+
           const distToCustomer = calculateDistance(
             order.seller_lat,
             order.seller_lng,
@@ -144,63 +188,76 @@ export default function DeliveryDashboard() {
           return (
             <div
               key={order.id}
-              className={`bg-white border-2 rounded-[2.5rem] overflow-hidden shadow-sm ${order.driver_id === user.id ? 'border-green-500 ring-4 ring-green-50' : 'border-gray-100'}`}
+              className={`bg-white border-2 rounded-[2.5rem] overflow-hidden shadow-sm transition ${
+                order.driver_id === user.id
+                  ? 'border-green-500 ring-4 ring-green-50'
+                  : 'border-gray-100'
+              }`}
             >
               <div className="p-6 md:p-8 grid md:grid-cols-3 gap-8">
-                {/* المنتج والبيان المالي */}
+                {/* المنتج */}
                 <div className="flex gap-4">
                   <img
                     src={order.product?.image_url}
                     className="w-24 h-24 rounded-3xl object-cover border"
                   />
+
                   <div>
                     <h3 className="font-black text-xl text-gray-800">
                       {order.product?.name}
                     </h3>
+
                     <p className="text-sm font-bold text-orange-600">
                       الكمية: {order.quantity}
                     </p>
+
                     <p className="text-2xl font-black text-green-700 mt-1">
                       {order.total} ج.م
                     </p>
                   </div>
                 </div>
 
-                {/* خريطة التواصل والمسافات */}
+                {/* بيانات المسافات */}
                 <div className="grid grid-cols-1 gap-3 border-r-2 border-dashed pr-6">
                   {/* البائع */}
                   <div className="bg-orange-50 p-3 rounded-2xl border border-orange-100 flex justify-between items-center">
                     <div>
-                      <p className="text-[10px] font-black text-orange-600">
-                        📍 من البائع (نقطة الاستلام)
-                      </p>
-                      <p className="font-bold text-gray-700 text-sm">
+                      <div className="flex items-center gap-1 text-[10px] font-black text-orange-600">
+                        <FaMapMarkerAlt />
+                        <span>من البائع (نقطة الاستلام)</span>
+                      </div>
+
+                      <p className="font-bold text-gray-700 text-sm mt-1">
                         المسافة منك: {distToSeller} كم
                       </p>
                     </div>
+
                     <a
                       href={`tel:${order.seller_phone}`}
-                      className="bg-orange-500 text-white p-2 rounded-full shadow-lg"
+                      className="bg-orange-500 text-white p-3 rounded-full shadow-lg hover:scale-110 transition"
                     >
-                      📞
+                      <FaPhoneAlt />
                     </a>
                   </div>
 
                   {/* المشتري */}
                   <div className="bg-blue-50 p-3 rounded-2xl border border-blue-100 flex justify-between items-center">
                     <div>
-                      <p className="text-[10px] font-black text-blue-600">
-                        🏠 إلى المشتري (نقطة التسليم)
-                      </p>
-                      <p className="font-bold text-gray-700 text-sm">
+                      <div className="flex items-center gap-1 text-[10px] font-black text-blue-600">
+                        <FaMapMarkerAlt />
+                        <span>إلى المشتري (نقطة التسليم)</span>
+                      </div>
+
+                      <p className="font-bold text-gray-700 text-sm mt-1">
                         المسافة من البائع: {distToCustomer} كم
                       </p>
                     </div>
+
                     <a
                       href={`tel:${order.customer_phone}`}
-                      className="bg-blue-600 text-white p-2 rounded-full shadow-lg"
+                      className="bg-blue-600 text-white p-3 rounded-full shadow-lg hover:scale-110 transition"
                     >
-                      📞
+                      <FaPhoneAlt />
                     </a>
                   </div>
                 </div>
@@ -211,7 +268,7 @@ export default function DeliveryDashboard() {
                     <button
                       onClick={() => handleAccept(order.id)}
                       disabled={actionLoading === order.id}
-                      className="w-full bg-black text-white py-5 rounded-2xl font-black hover:bg-green-600 transition-all shadow-xl active:scale-95"
+                      className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-5 rounded-2xl font-black hover:opacity-90 transition-all shadow-xl active:scale-95"
                     >
                       {actionLoading === order.id
                         ? 'جاري القبول...'
@@ -222,6 +279,7 @@ export default function DeliveryDashboard() {
                       <div className="bg-green-600 text-white py-3 rounded-2xl text-center font-black animate-pulse">
                         الطلب معك الآن 🚛
                       </div>
+
                       <p className="text-center text-xs text-gray-400">
                         تواصل مع البائع والمشتري لتنسيق الموعد
                       </p>
