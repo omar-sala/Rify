@@ -65,28 +65,19 @@ export default function Footer() {
               </li>
 
               <li>
-                <Link
-                  href="/products"
-                  className="hover:text-green-400 transition"
-                >
+                <Link href="/" className="hover:text-green-400 transition">
                   المنتجات
                 </Link>
               </li>
 
               <li>
-                <Link
-                  href="/seller-dashboard"
-                  className="hover:text-green-400 transition"
-                >
+                <Link href="/" className="hover:text-green-400 transition">
                   لوحة التاجر
                 </Link>
               </li>
 
               <li>
-                <Link
-                  href="/delivery-dashboard"
-                  className="hover:text-green-400 transition"
-                >
+                <Link href="/" className="hover:text-green-400 transition">
                   لوحة الدليفري
                 </Link>
               </li>
