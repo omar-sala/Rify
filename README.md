@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🌾 RIFY — Rural Real-Time Delivery Marketplace
 
-## Getting Started
+> A full-stack real-time marketplace connecting farmers, customers, and delivery drivers in one unified system.
 
-First, run the development server:
+---
+
+## 🚀 Overview
+
+**RIFY** is not just an e-commerce platform — it's a complete **real-time delivery ecosystem** built to connect rural fresh product sellers with customers and delivery drivers.
+
+From the moment a seller uploads a product → to order placement → driver assignment → live GPS tracking → final delivery… everything happens in real time.
+
+---
+
+## ⚡ Key Features
+
+### 👨‍🌾 Seller Dashboard
+- Add, edit, and delete products
+- Manage stock & pricing
+- Upload product images
+- Include contact & location details
+
+### 🛒 Customer Experience
+- Browse fresh rural products
+- Place orders instantly
+- Track delivery in real-time on map 📍
+- See live driver movement after order acceptance
+
+### 🚚 Delivery System
+- Receive nearby orders instantly after customer confirmation
+- Accept or reject delivery requests
+- Live GPS tracking updates
+- Distance calculation between seller, driver, and customer
+
+---
+
+## 🧠 Core System Logic
+
+- 🔄 **Real-Time Updates** using Supabase Realtime
+- 📍 **Live GPS Tracking** for driver movement
+- 📏 **Haversine Formula** for accurate distance calculation
+- ⚡ **Event-driven order flow** from creation → delivery
+- 🧩 Multi-role architecture (Seller / Customer / Driver)
+
+---
+
+## 🛠️ Tech Stack
+
+- Next.js (App Router)
+- TypeScript
+- Supabase (Database + Realtime + Auth + Storage)
+- Tailwind CSS
+- Google Maps API
+
+---
+
+## 📦 Installation
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
