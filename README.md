@@ -167,10 +167,6 @@ npm run dev
 
 ---
 
-## 🔐 Environment Variables
-
----
-
 ## 🌍 Deployment
 
 | Service  | Platform |
