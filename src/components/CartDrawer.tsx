@@ -11,8 +11,6 @@ export default function CartDrawer() {
   const { user } = useAuth()
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(false)
-
-  // حقل رقم تليفون المشتري
   const [customerPhone, setCustomerPhone] = useState('')
 
   useEffect(() => {
@@ -38,47 +36,85 @@ export default function CartDrawer() {
         const { latitude, longitude } = position.coords
 
         try {
-          const inserts = cart.map((item) => ({
-            user_id: user.id,
-            product_id: item.id,
-            quantity: item.quantity ?? 1,
-            total: item.price * (item.quantity ?? 1),
-            status: 'pending',
-            driver_id: null,
+          // Step 1: إنشاء الأوردر في Supabase
+          const firstItem = cart[0]
 
-            // البيانات اللي المندوب هيحتاجها فعلياً
-            customer_phone: customerPhone,
-            customer_lat: latitude,
-            customer_lng: longitude,
+          const { data: orderData, error: orderError } = await supabase
+            .from('orders')
+            .insert({
+              user_id: user.id,
+              product_id: firstItem.id,
+              quantity: firstItem.quantity ?? 1,
+              total: total,
+              status: 'pending',
+              driver_id: null,
+              customer_phone: customerPhone,
+              customer_lat: latitude,
+              customer_lng: longitude,
+              seller_phone: firstItem.seller_phone,
+              seller_lat: firstItem.lat,
+              seller_lng: firstItem.lng,
+              location: null,
+            })
+            .select()
+            .single()
 
-            // بيانات البائع
-            seller_phone: item.seller_phone,
-            seller_lat: item.lat,
-            seller_lng: item.lng,
+          if (orderError) throw orderError
 
-            // لو العمود "location" في الداتابيز Geometry سيبه فاضي أو ابعت NULL
-            location: null,
-          }))
+          const orderId = orderData.id
 
-          const { error } = await supabase.from('orders').insert(inserts)
+          // Step 2: بعت للسيرفر عشان يجيب payment URL
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_SERVER_URL}/api/payment/create`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                orderId,
+                amount: total * 100,
+                items: cart.map((item) => ({
+                  name: item.name,
+                  amount_cents: item.price * (item.quantity ?? 1) * 100,
+                  description: item.description || item.name,
+                  quantity: item.quantity ?? 1,
+                })),
+                billingData: {
+                  first_name: user.name?.split(' ')[0] || 'User',
+                  last_name: user.name?.split(' ')[1] || 'Rify',
+                  email: user.email || 'user@rify.com',
+                  phone_number: customerPhone,
+                  apartment: 'NA',
+                  floor: 'NA',
+                  street: 'NA',
+                  building: 'NA',
+                  shipping_method: 'NA',
+                  postal_code: 'NA',
+                  city: 'Cairo',
+                  country: 'EG',
+                  state: 'NA',
+                },
+              }),
+            }
+          )
 
-          if (error) {
-            console.error('Supabase Insert Error:', error)
-            throw error
-          }
+          const paymentData = await response.json()
 
-          alert('تم إرسال طلبك للمناديب بنجاح! 🚀')
+          if (!paymentData.success) throw new Error('Payment creation failed')
+
+          // Step 3: فتح صفحة الدفع
           clearCart()
           closeCart()
           setCustomerPhone('')
+
+          window.location.href = paymentData.iframeUrl
         } catch (err: any) {
-          console.error('Full Error Object:', err)
-          alert('حدث خطأ: ' + (err.message || 'تأكد من إعدادات الجدول'))
+          console.error('Checkout Error:', err)
+          alert('حدث خطأ: ' + (err.message || 'حاول تاني'))
         } finally {
           setLoading(false)
         }
       },
-      (error) => {
+      () => {
         setLoading(false)
         alert('برجاء تفعيل الـ GPS لتحديد موقع التوصيل 📍')
       }
@@ -157,7 +193,6 @@ export default function CartDrawer() {
 
         {cart.length > 0 && (
           <div className="mt-auto pt-6 space-y-4 border-t-2 border-dashed border-gray-100">
-            {/* حقل رقم التليفون - إجباري */}
             <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100">
               <label className="block text-xs font-bold text-orange-600 mb-2 uppercase">
                 رقم تليفونك للتواصل مع المندوب *
@@ -183,10 +218,10 @@ export default function CartDrawer() {
               disabled={loading}
               className="w-full bg-orange-600 text-white py-4 rounded-2xl font-black text-lg hover:bg-orange-700 transition-all disabled:opacity-50 shadow-xl shadow-orange-100 active:scale-95"
             >
-              {loading ? 'جاري إرسال طلبك...' : 'تأكيد وشراء الخير ✅'}
+              {loading ? 'جاري تجهيز الدفع...' : 'ادفع الآن 💳'}
             </button>
             <p className="text-[10px] text-center text-gray-400">
-              بالضغط على تأكيد، سيتم تحديد موقعك بدقة لتسهيل وصول المندوب
+              بالضغط على ادفع، سيتم تحديد موقعك وتحويلك لصفحة الدفع الآمنة
             </p>
           </div>
         )}
