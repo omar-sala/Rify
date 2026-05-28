@@ -1,12 +1,12 @@
 # 🌾 RIFY — Rural Real-Time Delivery Marketplace
 
-> A full-stack real-time system connecting farmers, customers, and delivery drivers in one seamless delivery flow.
+> A full-stack real-time system connecting farmers, customers, and delivery drivers in one seamless delivery flow — with integrated online payment.
 
 ---
 
 ## 🚀 Overview
 
-**RIFY** is a smart rural marketplace that enables the buying and selling of fresh rural products with **real-time delivery tracking** and live GPS updates.
+**RIFY** is a smart rural marketplace that enables the buying and selling of fresh rural products with **real-time delivery tracking**, live GPS updates, and **secure online payment**.
 
 The system connects **3 main roles**:
 
@@ -14,7 +14,7 @@ The system connects **3 main roles**:
 - 🛒 Customers
 - 🚚 Delivery Drivers
 
-From product upload → order creation → driver assignment → live tracking → final delivery… everything runs in real-time.
+From product upload → order creation → **online payment** → driver assignment → live tracking → final delivery… everything runs in real-time.
 
 ---
 
@@ -50,6 +50,14 @@ Accept orders and handle real-time delivery flow
 
 ## ⚡ Key Features
 
+### 💳 Online Payment System
+
+- Secure card payments via **Paymob**
+- 3-step payment flow: Auth → Order Registration → Payment Key
+- Webhook verification using **HMAC SHA-512**
+- Automatic order status update to `paid` after successful payment
+- Dedicated payment success page with auto-redirect to orders
+
 ### 🔄 Real-Time System
 
 - Live order updates using Supabase Realtime
@@ -69,12 +77,12 @@ Accept orders and handle real-time delivery flow
 ### 🛒 Customer Experience
 
 - Browse fresh rural products
-- Place orders instantly
+- Place orders and **pay online securely**
 - Track delivery in real-time
 
 ### 🚚 Delivery System
 
-- Receive orders after customer confirmation
+- Receive orders after payment confirmation
 - Accept / reject delivery requests
 - Live navigation support
 
@@ -86,10 +94,13 @@ Accept orders and handle real-time delivery flow
 - Haversine Formula for distance calculation
 - Multi-role architecture system
 - Event-driven delivery flow
+- Secure payment flow with Paymob webhook verification
 
 ---
 
 ## 🛠️ Tech Stack
+
+### Frontend
 
 - Next.js (App Router)
 - TypeScript
@@ -97,11 +108,47 @@ Accept orders and handle real-time delivery flow
 - Tailwind CSS
 - Google Maps API
 
+### Backend
+
+- Node.js + Express
+- TypeScript
+- Paymob Payment Gateway
+- Supabase (Service Role)
+- Deployed on Railway
+
+---
+
+## 💳 Payment Flow
+
+```
+Customer adds products to cart
+         ↓
+Enters phone number → clicks Pay Now
+         ↓
+Frontend sends request to Node.js server
+         ↓
+Server → Paymob: Get Auth Token
+         ↓
+Server → Paymob: Register Order (with Supabase order ID)
+         ↓
+Server → Paymob: Get Payment Key
+         ↓
+Customer redirected to Paymob payment page
+         ↓
+Customer pays with card
+         ↓
+Paymob sends Webhook to server (HMAC verified)
+         ↓
+Server updates order status to "paid" in Supabase
+         ↓
+Customer redirected to success page
+```
+
 ---
 
 ## 🚀 Getting Started
 
-To run this project locally:
+### Frontend
 
 ```bash
 git clone https://github.com/omar-sala/Rify.git
@@ -109,3 +156,26 @@ cd Rify
 npm install
 npm run dev
 ```
+
+### Backend
+
+```bash
+cd server
+npm install
+npm run dev
+```
+
+---
+
+## 🔐 Environment Variables
+
+---
+
+## 🌍 Deployment
+
+| Service  | Platform |
+| -------- | -------- |
+| Frontend | Vercel   |
+| Backend  | Railway  |
+| Database | Supabase |
+| Payment  | Paymob   |
