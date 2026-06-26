@@ -21,85 +21,119 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-green-700 text-white px-4 py-3 flex flex-col sm:flex-row items-center sm:justify-between gap-3 sm:gap-0 z-50 shadow-md">
+    <nav
+      className="fixed top-0 left-0 right-0 bg-emerald-50/95 backdrop-blur-md text-slate-800 px-4 py-3.5 sm:px-8 flex flex-col sm:flex-row items-center sm:justify-between gap-3 sm:gap-0 z-50 shadow-sm border-b border-emerald-100/80"
+      dir="rtl"
+    >
+      {/* Brand & Mobile Actions */}
       <div className="flex items-center justify-between w-full sm:w-auto">
-        <Link href="/" className="text-xl font-bold cursor-pointer">
-          RIFY 🌿
+        <Link
+          href="/"
+          className="text-2xl font-black tracking-wider hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-2"
+        >
+          <span className="bg-gradient-to-l from-emerald-600 to-green-700 bg-clip-text text-transparent">
+            RIFY
+          </span>
+          <span className="text-xl bg-emerald-600/10 p-1.5 rounded-xl border border-emerald-200/50">
+            🌿
+          </span>
         </Link>
 
-        <div className="flex items-center gap-3 sm:hidden">
+        {/* Mobile Icons Area (With Bug Fix) */}
+        <div className="flex items-center gap-2 sm:hidden">
           <button
             onClick={openCart}
-            className="relative px-2 py-1 hover:bg-green-800 rounded-lg transition"
+            className="relative p-2.5 hover:bg-emerald-600/10 active:bg-emerald-600/20 rounded-xl transition-all duration-200"
           >
-            <FaShoppingCart />
+            <FaShoppingCart className="text-xl text-emerald-700" />
             {cart?.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-[10px] rounded-full h-4 w-4 flex items-center justify-center">
+              <span className="absolute top-1 right-1 bg-rose-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center animate-bounce shadow-sm">
                 {cart.length}
               </span>
             )}
           </button>
 
-          <Link href={user ? `/dashboard/${user.role}` : '/login'}>
-            <FaUser />
+          <Link
+            href={
+              user
+                ? user.role === 'user'
+                  ? '/orders'
+                  : `/dashboard/${user.role}`
+                : '/login'
+            }
+            className="p-2.5 hover:bg-emerald-600/10 active:bg-emerald-600/20 rounded-xl transition-all duration-200 flex items-center justify-center"
+          >
+            {user ? (
+              <div className="w-6 h-6 bg-emerald-600 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-sm">
+                {user.name?.charAt(0).toUpperCase() || 'U'}
+              </div>
+            ) : (
+              <FaUser className="text-lg text-emerald-700" />
+            )}
           </Link>
         </div>
       </div>
 
-      {/* search */}
-      <div className="w-full sm:w-1/2 relative">
-        <FaSearch className="absolute top-3 right-3 text-gray-500" />
+      {/* Balanced Modern Search Bar */}
+      <div className="w-full sm:w-5/12 relative group">
+        <FaSearch className="absolute top-1/2 right-4 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-600 transition-colors duration-200" />
 
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="ابحث عن منتج..."
-          className="w-full px-10 py-2 rounded-lg border-2 border-gray-300 text-black focus:border-green-600 outline-none transition"
+          placeholder="ابحث عن منتجات ريفية طازجة..."
+          className="w-full pl-4 pr-11 py-2.5 text-sm rounded-2xl bg-white text-slate-800 placeholder-slate-400 border border-emerald-200/60 focus:border-emerald-500/30 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all duration-200 shadow-inner"
         />
       </div>
 
-      <div className="hidden sm:flex items-center gap-4">
+      {/* Desktop Actions */}
+      <div className="hidden sm:flex items-center gap-3">
         <button
           onClick={openCart}
-          className="cursor-pointer relative px-3 py-2 rounded-lg hover:bg-green-800 transition-all duration-200"
+          className="cursor-pointer relative px-4 py-2.5 text-sm font-bold rounded-2xl text-slate-700 hover:text-emerald-700 hover:bg-emerald-600/5 transition-all duration-200 flex items-center gap-2"
         >
-          <FaShoppingCart /> السلة
+          <FaShoppingCart className="text-base text-emerald-600" />
+          <span>السلة</span>
           {cart?.length > 0 && (
-            <span className="absolute top-0 right-0 bg-red-500 text-xs rounded-full h-5 w-5 flex items-center justify-center translate-x-1/2 -translate-y-1/2">
+            <span className="absolute -top-1 -left-1 bg-rose-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center shadow-md">
               {cart.length}
             </span>
           )}
         </button>
 
+        <div className="h-5 w-[1px] bg-emerald-200 mx-1"></div>
+
         {loading ? (
-          <div className="h-8 w-20 bg-green-600 animate-pulse rounded"></div>
+          <div className="h-10 w-24 bg-slate-200/60 animate-pulse rounded-2xl"></div>
         ) : user ? (
           <div className="flex items-center gap-2">
             <Link
               href={
                 user.role === 'user' ? '/orders' : `/dashboard/${user.role}`
               }
-              className="px-3 py-2 rounded-lg hover:bg-green-800 transition flex items-center gap-2"
+              className="px-4 py-2.5 text-sm font-bold rounded-2xl bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm transition-all duration-200 flex items-center gap-2"
             >
-              <FaUser />
-              {user.name.split(' ')[0]}
+              <div className="w-5 h-5 bg-white text-emerald-600 rounded-full flex items-center justify-center text-[10px] font-black">
+                {user.name.charAt(0).toUpperCase()}
+              </div>
+              <span>{user.name.split(' ')[0]}</span>
             </Link>
 
             <button
               onClick={handleLogout}
-              className="px-2 py-1 bg-red-600 rounded hover:bg-red-700 text-xs flex items-center gap-1"
+              className="p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-2xl transition-all duration-200"
+              title="تسجيل الخروج"
             >
-              <FaSignOutAlt />
-              خروج
+              <FaSignOutAlt className="text-base" />
             </button>
           </div>
         ) : (
           <Link
             href="/login"
-            className="px-4 py-2 bg-white text-green-700 rounded-lg font-bold hover:bg-gray-200 transition"
+            className="px-5 py-2.5 bg-emerald-600 text-white text-sm font-bold rounded-2xl hover:bg-emerald-700 active:scale-95 shadow-sm transition-all duration-200"
           >
-            دخول
+            تسجيل الدخول
           </Link>
         )}
       </div>
